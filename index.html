@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ALMANI - 얼마니?</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f8f2e5;color:#073b2d;font-family:Arial,sans-serif}
+.app{max-width:480px;margin:auto;padding:22px 20px 30px}
+header{text-align:center;padding:22px 0}
+.logo{font-size:42px;font-weight:900;letter-spacing:-2px}
+.subtitle{font-size:24px;font-weight:bold}
+.hero{text-align:center;background:#e4efdf;border-radius:24px;padding:22px;margin-bottom:20px}
+.mascot{font-size:65px}
+.hero p{margin:8px 0;font-weight:bold}
+.lang{display:flex;justify-content:space-between;margin-bottom:18px}
+.lang button,.swap{border:0;border-radius:20px;padding:12px;background:white;color:#073b2d;font-weight:bold;cursor:pointer}
+.currency{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;font-weight:bold}
+.swap{background:#073b2d;color:white;font-size:20px}
+.amount{background:white;border:2px solid #e6dfd0;border-radius:20px;text-align:center;padding:20px 8px;font-size:42px;font-weight:900;overflow-wrap:anywhere}
+.result{background:#e0ebd8;border-radius:20px;text-align:center;padding:22px 8px;margin:12px 0 18px;font-size:40px;font-weight:900;overflow-wrap:anywhere}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keypad button{border:1px solid #e9e1d4;border-radius:20px;background:white;padding:18px;font-size:28px;color:#073b2d;cursor:pointer}
+.keypad .clear{background:#ffaaa0;color:#8b1818}
+.keypad .delete{background:#073b2d;color:white}
+.show{width:100%;border:0;border-radius:20px;background:#07513d;color:white;padding:20px;margin-top:16px;font-size:20px;font-weight:bold;cursor:pointer}
+.ad{margin-top:22px;padding:16px;border:1px dashed #c4bcae;border-radius:14px;text-align:center;font-size:13px;color:#888}
+.overlay{display:none;position:fixed;inset:0;background:#fff7e7;z-index:10;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+.overlay.active{display:flex}
+.biglabel{font-size:20px;font-weight:bold}
+.bigamount{font-size:clamp(38px,11vw,72px);font-weight:900;margin:18px 0;overflow-wrap:anywhere;max-width:100%}
+.divider{width:80%;border-top:2px solid #e5dac7;margin:24px}
+.back{border:0;border-radius:20px;background:#07513d;color:white;padding:18px 50px;font-size:20px;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="lang">
+<button onclick="changeLang()" id="langBtn">🇰🇷 한국어 / 🇻🇳 Tiếng Việt</button>
+</div>
+<header>
+<div class="logo">ALMANI 🌴</div>
+<div class="subtitle" id="subtitle">얼마니?</div>
+</header>
+<div class="hero">
+<div class="mascot">👧🏻👒</div>
+<p id="heroText">베트남 여행, 가격을 쉽게!</p>
+</div>
+<div class="currency">
+<span id="fromLabel">🇻🇳 VND (베트남 동)</span>
+<button class="swap" onclick="swapCurrency()">⇄</button>
+<span id="toLabel">🇰🇷 KRW (한국 원)</span>
+</div>
+<div class="amount" id="amount">0 ₫</div>
+<div class="result" id="result">≈ 0 원</div>
+<div class="keypad">
+<button onclick="press('1')">1</button>
+<button onclick="press('2')">2</button>
+<button onclick="press('3')">3</button>
+<button onclick="press('4')">4</button>
+<button onclick="press('5')">5</button>
+<button onclick="press('6')">6</button>
+<button onclick="press('7')">7</button>
+<button onclick="press('8')">8</button>
+<button onclick="press('9')">9</button>
+<button class="clear" onclick="clearAmount()">C</button>
+<button onclick="press('0')">0</button>
+<button class="delete" onclick="removeLast()">⌫</button>
+</div>
+<button class="show" onclick="showBig()" id="showBtn">⛶ 크게 보여주기</button>
+<div class="ad" id="adText">광고 영역 (추후 연결)</div>
+</div>
+
+<div class="overlay" id="overlay">
+<div class="logo">ALMANI 🌴</div>
+<div class="biglabel" id="bigFromLabel"></div>
+<div class="bigamount" id="bigFrom"></div>
+<div class="divider"></div>
+<div class="biglabel" id="bigToLabel"></div>
+<div class="bigamount" id="bigTo"></div>
+<div style="font-size:65px">👧🏻👒</div>
+<button class="back" onclick="closeBig()" id="backBtn">돌아가기</button>
+</div>
+
+<script>
+let input="0";
+let reversed=false;
+let vietnamese=false;
+const rate=0.0567;
+
+function format(n){return Math.round(n).toLocaleString("ko-KR")}
+function update(){
+let value=Number(input);
+let converted=reversed?value/rate:value*rate;
+let fromUnit=reversed?"원":"₫";
+let toUnit=reversed?"₫":"원";
+document.getElementById("amount").textContent=format(value)+" "+fromUnit;
+document.getElementById("result").textContent="≈ "+format(converted)+" "+toUnit;
+document.getElementById("fromLabel").textContent=reversed?"🇰🇷 KRW":"🇻🇳 VND";
+document.getElementById("toLabel").textContent=reversed?"🇻🇳 VND":"🇰🇷 KRW";
+document.getElementById("bigFromLabel").textContent=reversed?"🇰🇷 한국 원 (KRW)":"🇻🇳 베트남 동 (VND)";
+document.getElementById("bigToLabel").textContent=reversed?"🇻🇳 베트남 동 (VND)":"🇰🇷 한국 원 (KRW)";
+document.getElementById("bigFrom").textContent=format(value)+" "+fromUnit;
+document.getElementById("bigTo").textContent=format(converted)+" "+toUnit;
+}
+function press(n){
+if(input.length>=12)return;
+input=input==="0"?n:input+n;
+update();
+}
+function clearAmount(){input="0";update()}
+function removeLast(){input=input.slice(0,-1)||"0";update()}
+function swapCurrency(){reversed=!reversed;input="0";update()}
+function showBig(){update();document.getElementById("overlay").classList.add("active")}
+function closeBig(){document.getElementById("overlay").classList.remove("active")}
+function changeLang(){
+vietnamese=!vietnamese;
+document.getElementById("subtitle").textContent=vietnamese?"Bao nhiêu?":"얼마니?";
+document.getElementById("heroText").textContent=vietnamese?"Du lịch dễ dàng hơn!":"베트남 여행, 가격을 쉽게!";
+document.getElementById("showBtn").textContent=vietnamese?"⛶ Hiển thị lớn":"⛶ 크게 보여주기";
+document.getElementById("backBtn").textContent=vietnamese?"Quay lại":"돌아가기";
+document.getElementById("adText").textContent=vietnamese?"Khu vực quảng cáo":"광고 영역 (추후 연결)";
+}
+update();
+</script>
+</body>
+</html>
